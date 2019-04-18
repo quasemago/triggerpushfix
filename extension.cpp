@@ -14,13 +14,6 @@ SH_DECL_MANUALHOOK1_void(Touch, 0, 0, 0, CBaseEntity *);
 SH_DECL_MANUALHOOK1_void(EndTouch, 0, 0, 0, CBaseEntity *);
 SH_DECL_MANUALHOOK2_void(PlayerRunCmdHook, 0, 0, 0, CUserCmd *, IMoveHelper *);
 
-#define PLAYERRUNCMD_OFFSET (476)
-#define CBASEENTITY_TOUCH_OFFSET (103)
-#define CBASEENTITY_ENDTOUCH_OFFSET (104)
-#define TRIGGER_PASSESTRIGGERFILTERS_OFFSET (209)
-
-
-
 IServerTools *servertools = NULL;
 
 IBinTools* bintools = NULL;
@@ -91,9 +84,42 @@ bool TriggerPushFix::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen
 
 bool TriggerPushFix::SDK_OnLoad(char *error, size_t maxlength, bool late)
 {
-	SH_MANUALHOOK_RECONFIGURE(Touch, CBASEENTITY_TOUCH_OFFSET, 0, 0);
-	SH_MANUALHOOK_RECONFIGURE(EndTouch, CBASEENTITY_ENDTOUCH_OFFSET, 0, 0);
-	SH_MANUALHOOK_RECONFIGURE(PlayerRunCmdHook, PLAYERRUNCMD_OFFSET, 0, 0);
+	// Get offsets from gamedata.
+	IGameConfig* pGameConf;
+
+	if (!gameconfs->LoadGameConfigFile("triggerpushfix.games", &pGameConf, error, maxlength)) {
+		snprintf(error, maxlength, "Failed to load gamedata file");
+		gameconfs->CloseGameConfigFile(pGameConf);
+		return false;
+	}
+
+	int index;
+	if (pGameConf->GetOffset("Touch", &index)) {
+		SH_MANUALHOOK_RECONFIGURE(Touch, index, 0, 0);
+	}
+	else {
+		snprintf(error, maxlength, "Failed to obtain 'Touch' offset from gamedata");
+		gameconfs->CloseGameConfigFile(pGameConf);
+		return false;
+	}
+
+	if (pGameConf->GetOffset("EndTouch", &index)) {
+		SH_MANUALHOOK_RECONFIGURE(EndTouch, index, 0, 0);
+	}
+	else {
+		snprintf(error, maxlength, "Failed to obtain 'EndTouch' offset from gamedata");
+		gameconfs->CloseGameConfigFile(pGameConf);
+		return false;
+	}
+
+	if (pGameConf->GetOffset("PlayerRunCmd", &index)) {
+		SH_MANUALHOOK_RECONFIGURE(PlayerRunCmdHook, index, 0, 0);
+	}
+	else {
+		snprintf(error, maxlength, "Failed to obtain 'PlayerRunCmd' offset from gamedata");
+		gameconfs->CloseGameConfigFile(pGameConf);
+		return false;
+	}
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdkhooks.ext", true, true);
@@ -116,7 +142,17 @@ bool TriggerPushFix::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	paramInfo[0].flags = PASSFLAG_BYVAL;
 	paramInfo[0].size = sizeof(CBaseEntity*);
 
-	passesfiltercall = bintools->CreateVCall(TRIGGER_PASSESTRIGGERFILTERS_OFFSET, 0, 0, &retBuf, paramInfo, 1);
+
+	if (pGameConf->GetOffset("PassesTriggerFilters", &index)) {
+		passesfiltercall = bintools->CreateVCall(index, 0, 0, &retBuf, paramInfo, 1);
+	}
+	else {
+		snprintf(error, maxlength, "Failed to obtain 'PassesTriggerFilters' offset from gamedata");
+		gameconfs->CloseGameConfigFile(pGameConf);
+		return false;
+	}
+
+	gameconfs->CloseGameConfigFile(pGameConf);
 
 	g_ExecList[0] = NULL;
 	for (int client = 1; client < SM_MAXPLAYERS + 1; client++) {

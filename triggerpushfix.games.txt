@@ -1,0 +1,29 @@
+"Games"
+{
+	"csgo"
+	{
+		"Offsets"
+		{
+			"Touch"
+			{
+				"windows"	"103"
+				"linux"		"104"
+			}
+			"EndTouch"
+			{
+				"windows"	"104"
+				"linux"		"105"
+			}
+			"PlayerRunCmd"
+			{
+				"windows"	"476"
+				"linux"		"477"
+			}
+			"PassesTriggerFilters"
+			{
+				"windows"	"209"
+				"linux"		"210"
+			}
+		}
+	}
+}
