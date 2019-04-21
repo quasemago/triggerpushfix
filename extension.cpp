@@ -15,6 +15,7 @@ SH_DECL_MANUALHOOK1_void(EndTouch, 0, 0, 0, CBaseEntity *);
 SH_DECL_MANUALHOOK2_void(PlayerRunCmdHook, 0, 0, 0, CUserCmd *, IMoveHelper *);
 
 IServerTools *servertools = NULL;
+IForward* g_pOnTouch = NULL;
 
 IBinTools* bintools = NULL;
 ISDKHooks* sdkhooks = NULL;
@@ -123,10 +124,12 @@ bool TriggerPushFix::SDK_OnLoad(char *error, size_t maxlength, bool late)
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdkhooks.ext", true, true);
+
 	if (!sharesys->RequestInterface(SMINTERFACE_BINTOOLS_NAME, SMINTERFACE_BINTOOLS_VERSION, myself, reinterpret_cast<SMInterface**>(&bintools))) {
 		snprintf(error, maxlength, "Cannot get IBintools Interface");
 		return false;
 	}
+
 	if (!sharesys->RequestInterface(SMINTERFACE_SDKHOOKS_NAME, SMINTERFACE_SDKHOOKS_VERSION, myself, reinterpret_cast<SMInterface**>(&sdkhooks))) {
 		snprintf(error, maxlength, "Cannot get SDKHooks Interface");
 		return false;
@@ -154,26 +157,33 @@ bool TriggerPushFix::SDK_OnLoad(char *error, size_t maxlength, bool late)
 
 	gameconfs->CloseGameConfigFile(pGameConf);
 
+	// Late Load.
 	g_ExecList[0] = NULL;
+
 	for (int client = 1; client < SM_MAXPLAYERS + 1; client++) {
 		g_ExecList[client] = NULL;
 	}
+
 	for (int client = 1; client < SM_MAXPLAYERS + 1; client++) {
 		edict_t *edict = gamehelpers->EdictOfIndex(client);
 		if (!edict || edict->IsFree()) {
 			continue;
 		}
+
 		IGamePlayer *player = playerhelpers->GetGamePlayer(edict);
 		if (!player || !player->IsInGame()) {
 			continue;
 		}
+
 		IServerUnknown *unk = edict->GetUnknown();
 		if (!unk) {
 			continue;
 		}
+
 		CBaseEntity *pEntity = unk->GetBaseEntity();
 		g_ExecList[client] = new ExecPlayer(SH_ADD_MANUALHOOK(PlayerRunCmdHook, pEntity, SH_MEMBER(&g_Fixer, &TriggerPushFix::Hook_PlayerRunCmd), false));
 	}
+
 	CBaseEntity *pEntity = NULL;
 	while ((pEntity = FindEntityByClassname(pEntity, "trigger_push")) != NULL) {
 		g_HookList[pEntity] = new TriggerHooker(SH_ADD_MANUALHOOK(Touch, pEntity, SH_MEMBER(&g_Fixer, &TriggerPushFix::Hook_Touch), false));
@@ -183,6 +193,11 @@ bool TriggerPushFix::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	playerhelpers->AddClientListener(this);
 
 	return true;
+}
+
+void TriggerPushFix::SDK_OnAllLoaded()
+{
+	g_pOnTouch = forwards->CreateForward("TriggerPushFix_OnTouch", ET_Event, 1, NULL, Param_Cell);
 }
 
 void TriggerPushFix::SDK_OnUnload()
@@ -202,6 +217,7 @@ void TriggerPushFix::SDK_OnUnload()
 	g_HookList.clear();
 
 	passesfiltercall->Destroy();
+	forwards->ReleaseForward(g_pOnTouch);
 }
 
 void TriggerPushFix::OnEntityCreated(CBaseEntity *pEntity, const char *classname)
@@ -259,6 +275,19 @@ void TriggerPushFix::Hook_Touch(CBaseEntity *pOther)
 	CBaseEntity **params = reinterpret_cast<CBaseEntity**>(new char[sizeof(CBaseEntity*)*2]);
 	params[0] = pEntity;
 	params[1] = pOther;
+
+	// Call Forward.
+	if (!g_pOnTouch) {
+		RETURN_META(MRES_IGNORED);
+	}
+
+	cell_t result = 0;
+	g_pOnTouch->PushCell(entity);
+	g_pOnTouch->Execute(&result);
+
+	if (result == Pl_Handled) {
+		RETURN_META(MRES_IGNORED);
+	}
 
 	bool *passes_ptr = new bool;
 	*passes_ptr = false;
@@ -365,11 +394,11 @@ static CBaseEntity* FindEntityByClassname(CBaseEntity *pEntity, const char *sear
 
 		lastletterpos = strlen(searchname) - 1;
 		if (searchname[lastletterpos] == '*') {
-			if (strncasecmp(searchname, classname, lastletterpos) == 0) {
+			if (V_strncasecmp(searchname, classname, lastletterpos) == 0) {
 				return pEntity;
 			}
 		}
-		else if (strcasecmp(searchname, classname) == 0) {
+		else if (V_strcasecmp(searchname, classname) == 0) {
 			return pEntity;
 		}
 

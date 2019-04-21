@@ -61,6 +61,12 @@ public:
 	 * @return			True to succeed loading, false to fail.
 	 */
 	virtual bool SDK_OnLoad(char *error, size_t maxlength, bool late);
+
+	/**
+	 * @brief This is called once all known extensions have been loaded.
+	 * Note: It is is a good idea to add natives here, if any are provided.
+	 */
+	virtual void SDK_OnAllLoaded();
 	
 	/**
 	 * @brief This is called right before the extension is unloaded.
