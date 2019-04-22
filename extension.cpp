@@ -19,8 +19,6 @@ IServerTools *servertools = NULL;
 IForward* g_pOnTouch = NULL;
 IForward* g_pOnTouched = NULL;
 
-ConVar g_cvEnabled("triggerpushfix_enabled", "1", 0, "Extension Status", true, 0.0, true, 1.0);
-
 IBinTools* bintools = NULL;
 ISDKHooks* sdkhooks = NULL;
 
