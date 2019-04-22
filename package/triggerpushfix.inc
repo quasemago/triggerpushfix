@@ -3,4 +3,4 @@
 #endif
 #define _triggerpushfix_included
 
-forward Action TriggerPushFix_OnTouch(int entity);
+forward Action TriggerPushFix_OnTouch(int entity, int client);

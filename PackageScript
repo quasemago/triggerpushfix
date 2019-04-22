@@ -38,12 +38,10 @@ CopyFiles('package', 'addons/sourcemod/gamedata',
   [ 'triggerpushfix.games.txt', ]
 )
 
-# Config Files
-#CopyFiles('configs', 'addons/sourcemod/configs',
-#  [ 'configfile.cfg',
-#  'otherconfig.cfg,
-#  ]
-#)
+# Autoload File
+CopyFiles('package', 'addons/sourcemod/extensions',
+  [ 'triggerpushfix.autoload', ]
+)
 
 # Copy binaries.
 for cxx_task in Extension.extensions:

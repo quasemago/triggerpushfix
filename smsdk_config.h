@@ -41,7 +41,7 @@
 #define SMEXT_CONF_NAME			"TriggerPushFix"
 #define SMEXT_CONF_DESCRIPTION	"CSGO trigger_push fix for replicated addition when lots of people in server"
 #define SMEXT_CONF_VERSION		"0.1.2_zrage.2"
-#define SMEXT_CONF_AUTHOR		"PerfectLaugh & edit by Ronn1nG."
+#define SMEXT_CONF_AUTHOR		"PerfectLaugh & edits by Ronn1nG."
 #define SMEXT_CONF_URL			"https://github.com/quasemago/triggerpushfix"
 #define SMEXT_CONF_LOGTAG		"PUSHFIX"
 #define SMEXT_CONF_LICENSE		"GPL"

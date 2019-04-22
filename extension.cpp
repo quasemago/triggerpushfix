@@ -197,7 +197,7 @@ bool TriggerPushFix::SDK_OnLoad(char *error, size_t maxlength, bool late)
 
 void TriggerPushFix::SDK_OnAllLoaded()
 {
-	g_pOnTouch = forwards->CreateForward("TriggerPushFix_OnTouch", ET_Event, 1, NULL, Param_Cell);
+	g_pOnTouch = forwards->CreateForward("TriggerPushFix_OnTouch", ET_Event, 2, NULL, Param_Cell, Param_Cell);
 }
 
 void TriggerPushFix::SDK_OnUnload()
@@ -269,25 +269,26 @@ void TriggerPushFix::Hook_Touch(CBaseEntity *pOther)
 		RETURN_META(MRES_IGNORED);
 	}
 
-	CBaseEntity* pEntity = META_IFACEPTR(CBaseEntity);
-	int entity = gamehelpers->EntityToBCompatRef(pEntity);
-
-	CBaseEntity **params = reinterpret_cast<CBaseEntity**>(new char[sizeof(CBaseEntity*)*2]);
-	params[0] = pEntity;
-	params[1] = pOther;
-
 	// Call Forward.
 	if (!g_pOnTouch) {
 		RETURN_META(MRES_IGNORED);
 	}
 
+	CBaseEntity* pEntity = META_IFACEPTR(CBaseEntity);
+	int entity = gamehelpers->EntityToBCompatRef(pEntity);
+
 	cell_t result = 0;
 	g_pOnTouch->PushCell(entity);
+	g_pOnTouch->PushCell(other);
 	g_pOnTouch->Execute(&result);
 
 	if (result == Pl_Handled) {
 		RETURN_META(MRES_IGNORED);
 	}
+
+	CBaseEntity **params = reinterpret_cast<CBaseEntity**>(new char[sizeof(CBaseEntity*)*2]);
+	params[0] = pEntity;
+	params[1] = pOther;
 
 	bool *passes_ptr = new bool;
 	*passes_ptr = false;
@@ -318,13 +319,13 @@ void TriggerPushFix::Hook_Touch(CBaseEntity *pOther)
 	MoveType_t movetype = (MoveType_t)*(char*)((char *)pOther + info.actual_offset);
 	
 	switch (movetype) {
-	case MOVETYPE_NONE:
-	case MOVETYPE_PUSH:
-	case MOVETYPE_NOCLIP:
-	case MOVETYPE_VPHYSICS:
-	{
-		RETURN_META(MRES_IGNORED);
-	}
+		case MOVETYPE_NONE:
+		case MOVETYPE_PUSH:
+		case MOVETYPE_NOCLIP:
+		case MOVETYPE_VPHYSICS:
+		{
+			RETURN_META(MRES_IGNORED);
+		}
 	}
 	
 	if (g_ExecList[other] == NULL) {
