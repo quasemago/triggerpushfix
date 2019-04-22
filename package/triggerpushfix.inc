@@ -4,3 +4,4 @@
 #define _triggerpushfix_included
 
 forward Action TriggerPushFix_OnTouch(int entity, int client);
+forward void TriggerPushFix_OnTouched(int entity, int client);

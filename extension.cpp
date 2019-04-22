@@ -15,7 +15,9 @@ SH_DECL_MANUALHOOK1_void(EndTouch, 0, 0, 0, CBaseEntity *);
 SH_DECL_MANUALHOOK2_void(PlayerRunCmdHook, 0, 0, 0, CUserCmd *, IMoveHelper *);
 
 IServerTools *servertools = NULL;
+
 IForward* g_pOnTouch = NULL;
+IForward* g_pOnTouched = NULL;
 
 IBinTools* bintools = NULL;
 ISDKHooks* sdkhooks = NULL;
@@ -198,6 +200,7 @@ bool TriggerPushFix::SDK_OnLoad(char *error, size_t maxlength, bool late)
 void TriggerPushFix::SDK_OnAllLoaded()
 {
 	g_pOnTouch = forwards->CreateForward("TriggerPushFix_OnTouch", ET_Event, 2, NULL, Param_Cell, Param_Cell);
+	g_pOnTouched = forwards->CreateForward("TriggerPushFix_OnTouched", ET_Ignore, 2, NULL, Param_Cell, Param_Cell);
 }
 
 void TriggerPushFix::SDK_OnUnload()
@@ -217,7 +220,9 @@ void TriggerPushFix::SDK_OnUnload()
 	g_HookList.clear();
 
 	passesfiltercall->Destroy();
+
 	forwards->ReleaseForward(g_pOnTouch);
+	forwards->ReleaseForward(g_pOnTouched);
 }
 
 void TriggerPushFix::OnEntityCreated(CBaseEntity *pEntity, const char *classname)
@@ -269,7 +274,7 @@ void TriggerPushFix::Hook_Touch(CBaseEntity *pOther)
 		RETURN_META(MRES_IGNORED);
 	}
 
-	// Call Forward.
+	// Call Pre-Forward.
 	if (!g_pOnTouch) {
 		RETURN_META(MRES_IGNORED);
 	}
@@ -327,10 +332,16 @@ void TriggerPushFix::Hook_Touch(CBaseEntity *pOther)
 			RETURN_META(MRES_IGNORED);
 		}
 	}
-	
+
 	if (g_ExecList[other] == NULL) {
 		RETURN_META(MRES_IGNORED);
 	}
+
+	// Call Post-Forward.
+	g_pOnTouched->PushCell(entity);
+	g_pOnTouched->PushCell(other);
+	g_pOnTouched->Execute();
+
 	g_ExecList[other]->mutex->Lock();
 	if (g_ExecList[other]->CanPush(pEntity)) {
 		g_ExecList[other]->IncCount(pEntity);
