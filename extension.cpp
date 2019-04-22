@@ -269,10 +269,6 @@ void TriggerPushFix::OnClientDisconnecting(int client)
 
 void TriggerPushFix::Hook_Touch(CBaseEntity *pOther)
 {
-	if (!g_cvEnabled.GetBool()) {
-		RETURN_META(MRES_IGNORED);
-	}
-
 	int other = gamehelpers->EntityToBCompatRef(pOther);
 	if (other < 1 || other > playerhelpers->GetMaxClients()) {
 		RETURN_META(MRES_IGNORED);
