@@ -19,6 +19,8 @@ IServerTools *servertools = NULL;
 IForward* g_pOnTouch = NULL;
 IForward* g_pOnTouched = NULL;
 
+ConVar g_cvEnabled("triggerpushfix_enabled", "1", 0, "Extension Status", true, 0.0, true, 1.0);
+
 IBinTools* bintools = NULL;
 ISDKHooks* sdkhooks = NULL;
 
@@ -269,6 +271,10 @@ void TriggerPushFix::OnClientDisconnecting(int client)
 
 void TriggerPushFix::Hook_Touch(CBaseEntity *pOther)
 {
+	if (!g_cvEnabled.GetBool()) {
+		RETURN_META(MRES_IGNORED);
+	}
+
 	int other = gamehelpers->EntityToBCompatRef(pOther);
 	if (other < 1 || other > playerhelpers->GetMaxClients()) {
 		RETURN_META(MRES_IGNORED);
@@ -282,7 +288,7 @@ void TriggerPushFix::Hook_Touch(CBaseEntity *pOther)
 	CBaseEntity* pEntity = META_IFACEPTR(CBaseEntity);
 	int entity = gamehelpers->EntityToBCompatRef(pEntity);
 
-	cell_t result = 0;
+	cell_t result = Pl_Continue;
 	g_pOnTouch->PushCell(entity);
 	g_pOnTouch->PushCell(other);
 	g_pOnTouch->Execute(&result);
