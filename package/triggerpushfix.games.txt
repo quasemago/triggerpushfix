@@ -16,8 +16,8 @@
 			}
 			"PlayerRunCmd"
 			{
-				"windows"	"476"
-				"linux"		"477"
+				"windows"	"477"
+				"linux"		"478"
 			}
 			"PassesTriggerFilters"
 			{
